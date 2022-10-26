@@ -1,0 +1,12 @@
+apiVersion: lb.my.domain/v1
+kind: VirtualServer
+metadata:
+  labels:
+    app.kubernetes.io/name: virtualserver
+    app.kubernetes.io/instance: virtualserver-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+  name: virtualserver-sample
+spec:
+  # TODO(user): Add fields here

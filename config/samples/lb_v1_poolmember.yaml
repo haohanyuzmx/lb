@@ -1,0 +1,12 @@
+apiVersion: lb.my.domain/v1
+kind: PoolMember
+metadata:
+  labels:
+    app.kubernetes.io/name: poolmember
+    app.kubernetes.io/instance: poolmember-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+  name: poolmember-sample
+spec:
+  # TODO(user): Add fields here

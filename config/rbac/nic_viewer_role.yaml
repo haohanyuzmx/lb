@@ -1,0 +1,27 @@
+# permissions for end users to view nics.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: nic-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: lb
+    app.kubernetes.io/part-of: lb
+    app.kubernetes.io/managed-by: kustomize
+  name: nic-viewer-role
+rules:
+- apiGroups:
+  - lb.my.domain
+  resources:
+  - nics
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - lb.my.domain
+  resources:
+  - nics/status
+  verbs:
+  - get

@@ -1,0 +1,12 @@
+apiVersion: lb.my.domain/v1
+kind: ServerPool
+metadata:
+  labels:
+    app.kubernetes.io/name: serverpool
+    app.kubernetes.io/instance: serverpool-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+  name: serverpool-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,12 @@
+apiVersion: lb.my.domain/v1
+kind: VirNet
+metadata:
+  labels:
+    app.kubernetes.io/name: virnet
+    app.kubernetes.io/instance: virnet-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+  name: virnet-sample
+spec:
+  # TODO(user): Add fields here

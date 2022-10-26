@@ -1,0 +1,83 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v4-alpha
+projectName: lb
+repo: my.domain/lb
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: lb
+  kind: LB
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: lb
+  kind: VM
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: lb
+  kind: NIC
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: lb
+  kind: VirNet
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: lb
+  kind: ServerPool
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: lb
+  kind: PoolMember
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: lb
+  kind: VirtualServer
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: lb
+  kind: Monitor
+  path: my.domain/lb/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: my.domain
+  group: lb
+  kind: ApplicationProfile
+  path: my.domain/lb/api/v1
+  version: v1
+version: "3"
