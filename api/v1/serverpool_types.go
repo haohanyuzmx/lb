@@ -2,15 +2,19 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type ServerPoolSpec struct {
-	Algorithm string       `json:"algorithm"`
-	Members   []PoolMember `json:"members"`
+	Name      string               `json:"name"`
+	Algorithm string               `json:"algorithm"`
+	Members   []PoolMember         `json:"members"`
+	Monitor   types.NamespacedName `json:"members"`
 }
 
 type PoolMember struct {
-	IPAddr      string `json:"ip_addr"`
+	ServerAddr  string `json:"server_address"`
+	ServerPort  int    `json:"server_port"`
 	Weight      int    `json:"weight"`
 	MonitorPort int    `json:"monitor_port"`
 }
@@ -18,10 +22,9 @@ type PoolMember struct {
 type ServerPoolStatus struct {
 	Members []MemberStatus
 }
+
 type MemberStatus struct {
-	Master bool `json:"master"`
-	Backup bool `json:"backup"`
-	Conn   int  `json:"conn"`
+	Conn int `json:"conn"`
 }
 
 // +kubebuilder:object:root=true

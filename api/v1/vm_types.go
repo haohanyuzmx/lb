@@ -21,16 +21,19 @@ import (
 )
 
 type VMSpec struct {
-	VirServers []VSTypes `json:"vir_servers"`
-	NICs       []string  `json:"nic_s"`
+	VirtualServers []VirtualServerInfo `json:"virtual_servers"`
+	NICs           []string            `json:"nic_s"`
 }
-type VSTypes struct {
-	Identity string `json:"identity"` //master|backup
-	VS       string `json:"vs"`       //vs的索引
+
+type VirtualServerInfo struct {
+	Index string `json:"index"` //virtualserver index
+	Role  string `json:"role"`  //master|backup
+
 }
 
 type VMStatus struct {
-	HealthCheck int64 `json:"health_check"` //时间戳
+	HealthCheck int64  `json:"health_check"`
+	Hostname    string `json:"hostname"`
 }
 
 // +kubebuilder:object:root=true
@@ -44,16 +47,16 @@ type VM struct {
 }
 
 func (vm *VM) AddMaster(master string) {
-	vm.Spec.VirServers = append(vm.Spec.VirServers, VSTypes{
-		Identity: "master",
-		VS:       master,
+	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
+		Role:  "MASTER",
+		Index: master,
 	})
 
 }
 func (vm *VM) AddBackup(backup string) {
-	vm.Spec.VirServers = append(vm.Spec.VirServers, VSTypes{
-		Identity: "backup",
-		VS:       backup,
+	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
+		Role:  "BACKUP",
+		Index: backup,
 	})
 
 }
