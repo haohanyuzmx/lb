@@ -5,12 +5,14 @@ import (
 )
 
 type NICSpec struct {
-	LIP string `json:"lip"`
+	Name string `json:"name"`
+	LIP  string `json:"lip"`
 }
 
 type NICStatus struct {
-	LIP string         `json:"lip"`
-	VIP map[string]int `json:"vip"` //{vip:load}
+	LIP  []string `json:"lip"`
+	VIP  []string `json:"vip"` //{vip:load}
+	Load float32  `json:"load"`
 }
 
 // +kubebuilder:object:root=true

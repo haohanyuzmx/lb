@@ -17,17 +17,14 @@ vrrp_instance {{.Name}} {
 
 {{range .VirtualServers}}
 virtual_server {{.Addr}} {
-    delay_loop {{.DelayLoop}}
+    delay_loop 2
     lb_algo {{.LBAlgo}}
-    lb_kind {{.LBKind}}
+    lb_kind NAT
     {{if .PersistenceTimeout}} persistence_timeout {{.PersistenceTimeout}} {{end}}
     protocol {{.Protocol}}
     {{range .RealServers}}
     real_server {{.Addr}} {
         weight {{.Weight}}
-        TCP_CHECK{
-            connect_timeout {{.TCPTimeout}}
-        }
     }
     {{end}}
 }

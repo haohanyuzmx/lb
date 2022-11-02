@@ -1,9 +1,10 @@
-package controllers
+package lb
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/runtime"
 	"math"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	lbv1 "my.domain/lb/api/v1"
 	"my.domain/lb/util"
 	ctrl "sigs.k8s.io/controller-runtime"
