@@ -14,9 +14,9 @@ import (
 
 type agentReconciler struct {
 	client.Client
-	Scheme           *runtime.Scheme
-	VirtualServers   map[string]*common.VirtualServer
-	keepalivedConfig *KeepalivedConfig
+	Scheme         *runtime.Scheme
+	VirtualServers map[string]*common.VirtualServer
+	keepalived     *Keepalived
 }
 
 func (r *agentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -33,7 +33,7 @@ func (r *agentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	//	}
 	//}
 
-	_, err := r.keepalivedConfig.GenerateL4Config(vm.Status.Hostname, virtualServer)
+	_, err := r.keepalived.UpdateConfig(vm.Status.Hostname, virtualServer)
 	if err != nil {
 		fmt.Printf("failed to generate config %s, error: %s", req.Name, err.Error())
 	}

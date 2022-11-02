@@ -62,11 +62,11 @@ var (
 func TestL4ConfGenerate(t *testing.T) {
 	var virtualServers []*common.VirtualServer
 
-	k := NewKeepalivedConfig()
+	k := NewKeepalived()
 
 	virtualServer1 := basicL4FullConfig
 	virtualServers = append(virtualServers, virtualServer1)
 
-	_, err := k.GenerateL4Config("vm", virtualServers)
+	_, err := k.UpdateConfig("vm", virtualServers)
 	assert.Equal(t, err, nil)
 }
