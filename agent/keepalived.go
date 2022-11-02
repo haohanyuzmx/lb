@@ -9,7 +9,7 @@ import (
 	"my.domain/lb/agent/constants"
 )
 
-type KeepalivedConfig struct {
+type Keepalived struct {
 	config *common.L4LbConfig
 }
 
@@ -17,8 +17,8 @@ var (
 	keepalvedTmpl = template.NewL4Template(constants.LbL4TemplatePath)
 )
 
-func NewKeepalivedConfig() *KeepalivedConfig {
-	k := new(KeepalivedConfig)
+func NewKeepalived() *Keepalived {
+	k := new(Keepalived)
 	k.config = new(common.L4LbConfig)
 	return k
 }
@@ -61,7 +61,17 @@ func generateVSConfig(virtualServer *common.VirtualServer) (*common.L4VirtualSer
 	return &vsConfig, nil
 }
 
-func (k *KeepalivedConfig) GenerateL4Config(vmHostname string, virtualServers []*common.VirtualServer) (*common.L4LbConfig, error) {
+func (k *Keepalived) UpdateConfig(vmHostname string, virtualServers []*common.VirtualServer) (bool, error) {
+	result, err := k.GenerateL4Config(vmHostname, virtualServers)
+	if err != nil {
+		return false, err
+	}
+	fmt.Printf(result)
+	//TODO update
+	return true, nil
+}
+
+func (k *Keepalived) GenerateL4Config(vmHostname string, virtualServers []*common.VirtualServer) (string, error) {
 
 	var vrrpsMap map[string]*common.Vrrp
 	vrrpsMap = make(map[string]*common.Vrrp)
@@ -99,8 +109,7 @@ func (k *KeepalivedConfig) GenerateL4Config(vmHostname string, virtualServers []
 	executor := template.NewL4TemplateExecuter(keepalvedTmpl, k.config)
 	result, err := template.ExecuteL4(executor)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	fmt.Println(result)
-	return k.config, nil
+	return result, nil
 }
