@@ -7,6 +7,31 @@ metadata:
     app.kubernetes.io/part-of: lb
     app.kuberentes.io/managed-by: kustomize
     app.kubernetes.io/created-by: lb
-  name: nic-sample
+    net: vn1
+  name: nic1
 spec:
-  # TODO(user): Add fields here
+  vm:
+    namespace: default
+    name: vm1
+  master:
+    namespace: default
+    name: nic2
+---
+apiVersion: lb.my.domain/v1
+kind: NIC
+metadata:
+  labels:
+    app.kubernetes.io/name: nic
+    app.kubernetes.io/instance: nic-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+    net: vn1
+  name: nic2
+spec:
+  vm:
+    namespace: default
+    name: vm2
+  master:
+    namespace: default
+    name: nic1

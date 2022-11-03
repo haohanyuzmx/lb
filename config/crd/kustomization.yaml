@@ -7,7 +7,6 @@ resources:
 - bases/lb.my.domain_nics.yaml
 - bases/lb.my.domain_virnets.yaml
 - bases/lb.my.domain_serverpools.yaml
-- bases/lb.my.domain_poolmembers.yaml
 - bases/lb.my.domain_virtualservers.yaml
 - bases/lb.my.domain_monitors.yaml
 - bases/lb.my.domain_applicationprofiles.yaml

@@ -46,14 +46,14 @@ func (r *agentReconciler) getlb(vm lbv1.VM) []*common.VirtualServer {
 	for _, vs := range vm.Spec.VirtualServers {
 		var virSer lbv1.VirtualServer
 
-		r.Get(context.Background(), util.String2NamespacedName(vs.Index), &virSer)
+		r.Get(context.Background(), util.NamespacedName2types(vs.Index), &virSer)
 		if virSer.Status.VIP == "" {
 
 		}
 		poolName := virSer.Spec.DefaultServerPool
 
 		serverPool := lbv1.ServerPool{}
-		r.Get(context.Background(), poolName, &serverPool)
+		r.Get(context.Background(), util.NamespacedName2types(poolName), &serverPool)
 		members := []common.PoolMember{}
 		for _, member := range serverPool.Spec.Members {
 			members = append(members, common.PoolMember{
@@ -70,7 +70,7 @@ func (r *agentReconciler) getlb(vm lbv1.VM) []*common.VirtualServer {
 			Role:        vs.Role,
 			//	Server:      server,
 		}
-		r.VirtualServers[vs.Index] = v
+		r.VirtualServers[vs.Index.String()] = v
 		vses = append(vses, v)
 	}
 	return vses

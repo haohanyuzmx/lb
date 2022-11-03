@@ -2,17 +2,17 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"my.domain/lb/util"
 )
 
 type VirNetSpec struct {
-	NICs    []string `json:"nic_s"` //nic的索引
-	VIPPool string
-	LIPPool string
+	NICs    []util.NamespacedName `json:"nic_s"` //nic的索引
+	VIPPool string                `json:"vip_pool"`
 }
 
 type VirNetStatus struct {
-	UnuseVIPPool string
-	UnuseLIPPool string
+	UnuseVIPPool []string `json:"unuse_vip_pool"`
+	IsAlloc      bool     `json:"is_alloc"`
 }
 
 // +kubebuilder:object:root=true
@@ -25,8 +25,28 @@ type VirNet struct {
 	Status VirNetStatus `json:"status,omitempty"`
 }
 
-func (vn *VirNet) GetVIP() string {
-	return ""
+func (vn *VirNet) Alloc() string {
+	if !vn.Status.IsAlloc {
+		vn.init()
+	}
+	if len(vn.Status.UnuseVIPPool) == 0 {
+		return ""
+	}
+	vip := vn.Status.UnuseVIPPool[0]
+	vn.Status.UnuseVIPPool = vn.Status.UnuseVIPPool[1:]
+	return vip
+}
+
+func (vn *VirNet) Free(vip string) {
+	vn.Status.UnuseVIPPool = append(vn.Status.UnuseVIPPool, vip)
+}
+
+func (vn *VirNet) init() {
+	if vn.Status.IsAlloc {
+		return
+	}
+	vn.Status.IsAlloc = true
+	vn.Status.UnuseVIPPool = []string{"1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4"}
 }
 
 // +kubebuilder:object:root=true

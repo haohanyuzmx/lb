@@ -18,16 +18,19 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"my.domain/lb/util"
 )
 
 type VMSpec struct {
-	VirtualServers []VirtualServerInfo `json:"virtual_servers"`
-	NICs           []string            `json:"nic_s"`
+	// +optional
+	VirtualServers []VirtualServerInfo   `json:"virtual_servers"`
+	NICs           []util.NamespacedName `json:"nic_s"`
 }
 
 type VirtualServerInfo struct {
-	Index string `json:"index"` //virtualserver index
-	Role  string `json:"role"`  //master|backup
+	Index util.NamespacedName `json:"index"` //virtualserver index
+	Role  string              `json:"role"`  //master|backup
 
 }
 
@@ -46,17 +49,17 @@ type VM struct {
 	Status VMStatus `json:"status,omitempty"`
 }
 
-func (vm *VM) AddMaster(master string) {
+func (vm *VM) AddMaster(master types.NamespacedName) {
 	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
 		Role:  "MASTER",
-		Index: master,
+		Index: util.Types2NamespacedName(master),
 	})
 
 }
-func (vm *VM) AddBackup(backup string) {
+func (vm *VM) AddBackup(backup types.NamespacedName) {
 	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
 		Role:  "BACKUP",
-		Index: backup,
+		Index: util.Types2NamespacedName(backup),
 	})
 
 }

@@ -71,8 +71,8 @@ func NewL4Template(file string) *Template {
 	return tmpl
 }
 
-//NewTemplate returns a new Template instance or an
-//error if the specified template file contains errors
+// NewTemplate returns a new Template instance or an
+// error if the specified template file contains errors
 func NewTemplate(file string, funcMap text_template.FuncMap) (*Template, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
