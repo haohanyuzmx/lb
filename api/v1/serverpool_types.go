@@ -2,14 +2,14 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 )
 
 type ServerPoolSpec struct {
-	Name      string              `json:"name"`
-	Algorithm string              `json:"algorithm"`
-	Members   []PoolMember        `json:"members"`
-	Monitor   util.NamespacedName `json:"monitor"`
+	Name      string                `json:"name"`
+	Algorithm string                `json:"algorithm"`
+	Members   []PoolMember          `json:"members"`
+	Monitor   common.NamespacedName `json:"monitor"`
 }
 
 type PoolMember struct {

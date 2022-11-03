@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"k8s.io/apimachinery/pkg/types"
 	"math"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -23,35 +23,97 @@ type ControllerReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) { //todo:事务
+func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	var err error
-	fmt.Println("run")
-	//onFail:= func() {  todo:失败后的恢复函数
-	//
-	//}
 
 	vs := &lbv1.VirtualServer{}
 	if err = r.Get(ctx, req.NamespacedName, vs); err != nil {
 		return ctrl.Result{}, err
 	}
+	if vs.DeletionTimestamp != nil {
+
+	}
+
 	//check(vs)
 	if vs.Status.VIP != "" && vs.Status.Backup.String() != `/` && vs.Status.Master.String() != `/` {
 		return ctrl.Result{}, nil
 	}
 
+	if err = r.addVS(ctx, vs); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualServer) error {
+	var err error
+	vsindex := vs.Namespace + `/` + vs.Name
+	if vs.Status.NowVirNet.String() != `/` {
+		vip := vs.Status.VIP
+		vn := &lbv1.VirNet{}
+		if err = r.Get(ctx, vs.Status.NowVirNet.Into(), vn); err != nil {
+			return err
+		}
+		vn.Free(vip)
+	}
+	if vs.Status.Master.String() != `/` {
+		master := &lbv1.VM{}
+		if err = r.Get(ctx, vs.Status.Master.Into(), master); err != nil {
+			return err
+		}
+		index := -1
+		for i, namespacedName := range master.Spec.Master {
+			if namespacedName.String() == vsindex {
+				index = i
+				break
+			}
+		}
+		if index == -1 {
+			fmt.Println("vm master wrong, should have vs")
+		} else {
+			master.Spec.Master = append(master.Spec.Master[:index], master.Spec.Master[index+1:]...)
+		}
+	}
+	if vs.Status.Backup.String() != `/` {
+		backup := &lbv1.VM{}
+		if err = r.Get(ctx, vs.Status.Backup.Into(), backup); err != nil {
+			return err
+		}
+		index := -1
+		for i, namespacedName := range backup.Spec.Master {
+			if namespacedName.String() == vsindex {
+				index = i
+				break
+			}
+		}
+		if index == -1 {
+			fmt.Println("vm backup wrong, should have vs")
+		} else {
+			backup.Spec.Master = append(backup.Spec.Master[:index], backup.Spec.Master[index+1:]...)
+		}
+	}
+	return nil
+}
+
+func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer) error { //todo:事务
+	//onFail:= func() {  todo:失败后的恢复函数
+	//
+	//}
+	var err error
 	net := vs.Spec.VirtualNetwork
 	vn := &lbv1.VirNet{}
 
-	if err = r.Get(ctx, util.NamespacedName2types(net), vn); err != nil {
-		return ctrl.Result{}, err
+	if err = r.Get(ctx, net.Into(), vn); err != nil {
+		return err
 	}
 	vip := vn.Alloc()
 	if vip == "" {
-		return ctrl.Result{}, errors.New("not enough vip")
+		return errors.New("not enough vip")
 	}
 	if err = r.Status().Update(ctx, vn); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	//stop:=make(chan struct{})
@@ -66,41 +128,40 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	//},time.Second,stop)
 
 	vs.Status.VIP = vip
-	if err = r.Status().Update(ctx, vs); err != nil {
-		return ctrl.Result{}, err
-	}
+	vs.Status.NowVirNet = vs.Spec.VirtualNetwork
 
 	masters, backups, err := r.getvm(vn)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 	master, backup := &lbv1.VM{}, &lbv1.VM{}
 
 	if err = r.Get(ctx, masters, master); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-	master.AddMaster(req.NamespacedName)
-	if err = r.Update(ctx, master); err != nil {
-		return ctrl.Result{}, err
-	}
-	vs.Status.Master = util.Types2NamespacedName(masters)
 
-	if backups.String() != `/` {
+	master.AddMaster(types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name})
+	if err = r.Update(ctx, master); err != nil {
+		//master没成功更新不用考虑backup更新
+		return err
+	}
+	vs.Status.Master.FromTypes(masters)
+
+	if backups.String() != `/` { //todo: 标记重试更新backup
 		if err = r.Get(ctx, backups, backup); err != nil {
-			return ctrl.Result{}, err
+			return err
 		}
-		backup.AddBackup(req.NamespacedName)
+		backup.AddBackup(types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name})
 		if err = r.Update(ctx, backup); err != nil {
-			return ctrl.Result{}, err
+			return err
 		}
-		vs.Status.Backup = util.Types2NamespacedName(backups)
+		vs.Status.Backup.FromTypes(backups)
 	}
 
 	if err = r.Status().Update(ctx, vs); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *ControllerReconciler) getvm(net *lbv1.VirNet) (types.NamespacedName, types.NamespacedName, error) {
@@ -119,14 +180,14 @@ func (r *ControllerReconciler) getvm(net *lbv1.VirNet) (types.NamespacedName, ty
 	master := nics.Items[index].Spec.VM
 	backupnic := nics.Items[index].Spec.Master
 	nic := &lbv1.NIC{}
-	var backup util.NamespacedName
-	if err := r.Get(context.Background(), util.NamespacedName2types(backupnic), nic); err != nil {
+	var backup common.NamespacedName
+	if err := r.Get(context.Background(), backupnic.Into(), nic); err != nil {
 		fmt.Println(err)
 	} else {
 		backup = nic.Spec.VM
 	}
 
-	return util.NamespacedName2types(master), util.NamespacedName2types(backup), nil
+	return master.Into(), backup.Into(), nil
 }
 
 func (r *ControllerReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -141,12 +202,12 @@ func (r *ControllerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &lbv1.VirNet{}}, &handler.Funcs{}); err != nil {
-		return err
-	}
-	if err = c.Watch(&source.Kind{Type: &lbv1.NIC{}}, &handler.Funcs{}); err != nil {
-		return err
-	}
+	//if err = c.Watch(&source.Kind{Type: &lbv1.VirNet{}}, &handler.Funcs{}); err != nil {
+	//	return err
+	//}
+	//if err = c.Watch(&source.Kind{Type: &lbv1.NIC{}}, &handler.Funcs{}); err != nil {
+	//	return err
+	//}
 	if err = c.Watch(&source.Kind{Type: &lbv1.VirtualServer{}}, &handler.EnqueueRequestForObject{}); err != nil {
 		return err
 	}

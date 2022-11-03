@@ -2,16 +2,16 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 )
 
 type NICSpec struct {
 	// +optional
 	Name string `json:"name"`
 	// +optional
-	LIP    string              `json:"lip"`
-	VM     util.NamespacedName `json:"vm"`
-	Master util.NamespacedName `json:"master"`
+	LIP    string                `json:"lip"`
+	VM     common.NamespacedName `json:"vm"`
+	Master common.NamespacedName `json:"master"`
 }
 
 type NICStatus struct {

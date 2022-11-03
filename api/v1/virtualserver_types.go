@@ -2,24 +2,25 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 )
 
 type VirtualServerSpec struct {
 	Enabled bool `json:"enabled"`
 	// +optional
-	Name               string              `json:"name"`
-	Protocol           string              `json:"protocol"`
-	VirtualNetwork     util.NamespacedName `json:"virtual_network"`
-	Port               int                 `json:"port"`
-	DefaultServerPool  util.NamespacedName `json:"default_server_pool"`
-	ApplicationProfile util.NamespacedName `json:"application_profile"`
+	Name               string                `json:"name"`
+	Protocol           string                `json:"protocol"`
+	VirtualNetwork     common.NamespacedName `json:"virtual_network"`
+	Port               int                   `json:"port"`
+	DefaultServerPool  common.NamespacedName `json:"default_server_pool"`
+	ApplicationProfile common.NamespacedName `json:"application_profile"`
 }
 
 type VirtualServerStatus struct {
-	VIP    string              `json:"vip"`
-	Master util.NamespacedName `json:"master"`
-	Backup util.NamespacedName `json:"backup"`
+	VIP       string                `json:"vip"`
+	NowVirNet common.NamespacedName `json:"now_vir_net"`
+	Master    common.NamespacedName `json:"master"`
+	Backup    common.NamespacedName `json:"backup"`
 }
 
 // +kubebuilder:object:root=true

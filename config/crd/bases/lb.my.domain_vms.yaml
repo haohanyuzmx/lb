@@ -33,7 +33,7 @@ spec:
             type: object
           spec:
             properties:
-              nic_s:
+              backup:
                 items:
                   properties:
                     name:
@@ -45,24 +45,28 @@ spec:
                   - namespace
                   type: object
                 type: array
-              virtual_servers:
+              master:
                 items:
                   properties:
-                    index:
-                      properties:
-                        name:
-                          type: string
-                        namespace:
-                          type: string
-                      required:
-                      - name
-                      - namespace
-                      type: object
-                    role:
+                    name:
+                      type: string
+                    namespace:
                       type: string
                   required:
-                  - index
-                  - role
+                  - name
+                  - namespace
+                  type: object
+                type: array
+              nic_s:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
                   type: object
                 type: array
             required:

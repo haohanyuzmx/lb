@@ -2,12 +2,12 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 )
 
 type VirNetSpec struct {
-	NICs    []util.NamespacedName `json:"nic_s"` //nic的索引
-	VIPPool string                `json:"vip_pool"`
+	NICs    []common.NamespacedName `json:"nic_s"` //nic的索引
+	VIPPool string                  `json:"vip_pool"`
 }
 
 type VirNetStatus struct {
@@ -37,7 +37,7 @@ func (vn *VirNet) Alloc() string {
 	return vip
 }
 
-func (vn *VirNet) Free(vip string) {
+func (vn *VirNet) Free(vip string) { // todo:校验
 	vn.Status.UnuseVIPPool = append(vn.Status.UnuseVIPPool, vip)
 }
 

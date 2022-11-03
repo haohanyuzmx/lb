@@ -1,37 +1,17 @@
-/*
-Copyright 2022.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"my.domain/lb/util"
+	"my.domain/lb/common"
 )
 
 type VMSpec struct {
 	// +optional
-	VirtualServers []VirtualServerInfo   `json:"virtual_servers"`
-	NICs           []util.NamespacedName `json:"nic_s"`
-}
-
-type VirtualServerInfo struct {
-	Index util.NamespacedName `json:"index"` //virtualserver index
-	Role  string              `json:"role"`  //master|backup
-
+	Master []common.NamespacedName `json:"master"`
+	// +optional
+	Backup []common.NamespacedName `json:"backup"`
+	NICs   []common.NamespacedName `json:"nic_s"`
 }
 
 type VMStatus struct {
@@ -50,18 +30,15 @@ type VM struct {
 }
 
 func (vm *VM) AddMaster(master types.NamespacedName) {
-	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
-		Role:  "MASTER",
-		Index: util.Types2NamespacedName(master),
-	})
+	n := common.NamespacedName{}
+	n.FromTypes(master)
+	vm.Spec.Master = append(vm.Spec.Master, n)
 
 }
 func (vm *VM) AddBackup(backup types.NamespacedName) {
-	vm.Spec.VirtualServers = append(vm.Spec.VirtualServers, VirtualServerInfo{
-		Role:  "BACKUP",
-		Index: util.Types2NamespacedName(backup),
-	})
-
+	n := common.NamespacedName{}
+	n.FromTypes(backup)
+	vm.Spec.Backup = append(vm.Spec.Backup, n)
 }
 
 // +kubebuilder:object:root=true

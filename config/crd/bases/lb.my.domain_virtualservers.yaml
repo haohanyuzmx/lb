@@ -101,11 +101,22 @@ spec:
                 - name
                 - namespace
                 type: object
+              now_vir_net:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               vip:
                 type: string
             required:
             - backup
             - master
+            - now_vir_net
             - vip
             type: object
         type: object
