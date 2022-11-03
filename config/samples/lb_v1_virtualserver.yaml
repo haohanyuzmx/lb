@@ -9,4 +9,15 @@ metadata:
     app.kubernetes.io/created-by: lb
   name: virtualserver-sample
 spec:
-  # TODO(user): Add fields here
+  enabled: true
+  protocol: l4
+  virtual_network:
+    namespace: default
+    name: vn1
+  port: 80
+  default_server_pool:
+    namespace: default
+    name: sp1
+  application_profile:
+    namespace: default
+    name: app1

@@ -2,17 +2,22 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"my.domain/lb/common"
 )
 
 type NICSpec struct {
+	// +optional
 	Name string `json:"name"`
-	LIP  string `json:"lip"`
+	// +optional
+	LIP    string                `json:"lip"`
+	VM     common.NamespacedName `json:"vm"`
+	Master common.NamespacedName `json:"master"`
 }
 
 type NICStatus struct {
 	LIP  []string `json:"lip"`
-	VIP  []string `json:"vip"` //{vip:load}
-	Load float32  `json:"load"`
+	VIP  []string `json:"vip"`
+	Load int      `json:"load"`
 }
 
 // +kubebuilder:object:root=true

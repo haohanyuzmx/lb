@@ -49,7 +49,7 @@ func TestL4Conf(t *testing.T) {
 	var executor *L4TemplateExecuter
 	var tmpl *Template
 	var err error
-	tmpl, err = NewL4Template(constants.LbL4TemplatePath)
+	tmpl = NewL4Template(constants.LbL4TemplatePath)
 	if err != nil {
 		println(err)
 	}
