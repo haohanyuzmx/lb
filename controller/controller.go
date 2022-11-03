@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
 	"math"
+
+	"k8s.io/apimachinery/pkg/types"
 	"my.domain/lb/common"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -36,7 +37,7 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	//check(vs)
-	if vs.Status.VIP != "" && vs.Status.Backup.String() != `/` && vs.Status.Master.String() != `/` {
+	if vs.Status.VIP != "" && vs.Status.Backup.ToString() != `/` && vs.Status.Master.ToString() != `/` {
 		return ctrl.Result{}, nil
 	}
 
@@ -50,22 +51,22 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualServer) error {
 	var err error
 	vsindex := vs.Namespace + `/` + vs.Name
-	if vs.Status.NowVirNet.String() != `/` {
+	if vs.Status.NowVirNet.ToString() != `/` {
 		vip := vs.Status.VIP
 		vn := &lbv1.VirNet{}
-		if err = r.Get(ctx, vs.Status.NowVirNet.Into(), vn); err != nil {
+		if err = r.Get(ctx, vs.Status.NowVirNet.IntoTypes(), vn); err != nil {
 			return err
 		}
 		vn.Free(vip)
 	}
-	if vs.Status.Master.String() != `/` {
+	if vs.Status.Master.ToString() != `/` {
 		master := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Master.Into(), master); err != nil {
+		if err = r.Get(ctx, vs.Status.Master.IntoTypes(), master); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range master.Spec.Master {
-			if namespacedName.String() == vsindex {
+		for i, namespacedName := range master.Status.MasterLBs {
+			if namespacedName.ToString() == vsindex {
 				index = i
 				break
 			}
@@ -73,17 +74,17 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm master wrong, should have vs")
 		} else {
-			master.Spec.Master = append(master.Spec.Master[:index], master.Spec.Master[index+1:]...)
+			master.Status.MasterLBs = append(master.Status.MasterLBs[:index], master.Status.MasterLBs[index+1:]...)
 		}
 	}
-	if vs.Status.Backup.String() != `/` {
+	if vs.Status.Backup.ToString() != `/` {
 		backup := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Backup.Into(), backup); err != nil {
+		if err = r.Get(ctx, vs.Status.Backup.IntoTypes(), backup); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range backup.Spec.Master {
-			if namespacedName.String() == vsindex {
+		for i, namespacedName := range backup.Status.MasterLBs {
+			if namespacedName.ToString() == vsindex {
 				index = i
 				break
 			}
@@ -91,7 +92,7 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm backup wrong, should have vs")
 		} else {
-			backup.Spec.Master = append(backup.Spec.Master[:index], backup.Spec.Master[index+1:]...)
+			backup.Status.MasterLBs = append(backup.Status.MasterLBs[:index], backup.Status.MasterLBs[index+1:]...)
 		}
 	}
 	return nil
@@ -105,7 +106,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 	net := vs.Spec.VirtualNetwork
 	vn := &lbv1.VirNet{}
 
-	if err = r.Get(ctx, net.Into(), vn); err != nil {
+	if err = r.Get(ctx, net.IntoTypes(), vn); err != nil {
 		return err
 	}
 	vip := vn.Alloc()
@@ -118,7 +119,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 
 	//stop:=make(chan struct{})
 	//wait.Until(func() {
-	//	if err := r.Get(ctx, util.String2NamespacedName(net), vn);err != nil {
+	//	if err := r.Get(ctx, util.ToString2NamespacedName(net), vn);err != nil {
 	//		return
 	//	}
 	//	if err:=r.Status().Update(ctx, vn);err!=nil{
@@ -181,13 +182,13 @@ func (r *ControllerReconciler) getvm(net *lbv1.VirNet) (types.NamespacedName, ty
 	backupnic := nics.Items[index].Spec.Master
 	nic := &lbv1.NIC{}
 	var backup common.NamespacedName
-	if err := r.Get(context.Background(), backupnic.Into(), nic); err != nil {
+	if err := r.Get(context.Background(), backupnic.IntoTypes(), nic); err != nil {
 		fmt.Println(err)
 	} else {
 		backup = nic.Spec.VM
 	}
 
-	return master.Into(), backup.Into(), nil
+	return master.IntoTypes(), backup.IntoTypes(), nil
 }
 
 func (r *ControllerReconciler) SetupWithManager(mgr ctrl.Manager) error {

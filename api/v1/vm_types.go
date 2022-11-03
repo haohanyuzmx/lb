@@ -7,16 +7,19 @@ import (
 )
 
 type VMSpec struct {
-	// +optional
-	Master []common.NamespacedName `json:"master"`
-	// +optional
-	Backup []common.NamespacedName `json:"backup"`
-	NICs   []common.NamespacedName `json:"nic_s"`
+	Memery   string                  `json:"memery"`
+	CPU      string                  `json:"cpu"`
+	MgtIP    string                  `json:"managment_ip"`
+	Hostname string                  `json:"hostname"`
+	NICs     []common.NamespacedName `json:"nic_s"`
 }
 
 type VMStatus struct {
-	HealthCheck int64  `json:"health_check"`
-	Hostname    string `json:"hostname"`
+	HealthCheck int64 `json:"health_check"`
+	// +optional
+	MasterLBs []common.NamespacedName `json:"master_lb"`
+	// +optional
+	BackupLBs []common.NamespacedName `json:"backup_lb"`
 }
 
 // +kubebuilder:object:root=true
@@ -32,13 +35,13 @@ type VM struct {
 func (vm *VM) AddMaster(master types.NamespacedName) {
 	n := common.NamespacedName{}
 	n.FromTypes(master)
-	vm.Spec.Master = append(vm.Spec.Master, n)
+	vm.Status.MasterLBs = append(vm.Status.MasterLBs, n)
 
 }
 func (vm *VM) AddBackup(backup types.NamespacedName) {
 	n := common.NamespacedName{}
 	n.FromTypes(backup)
-	vm.Spec.Backup = append(vm.Spec.Backup, n)
+	vm.Status.BackupLBs = append(vm.Status.BackupLBs, n)
 }
 
 // +kubebuilder:object:root=true

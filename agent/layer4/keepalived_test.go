@@ -1,4 +1,4 @@
-package agent
+package layer4
 
 import (
 	"testing"
@@ -45,12 +45,12 @@ var (
 
 					{
 						ServerAddr: "3.3.3.1",
-						Port:       80,
+						ServerPort: 80,
 						Weight:     100,
 					},
 					{
 						ServerAddr: "3.3.3.2",
-						Port:       80,
+						ServerPort: 80,
 						Weight:     100,
 					},
 				},
@@ -67,6 +67,6 @@ func TestL4ConfGenerate(t *testing.T) {
 	virtualServer1 := basicL4FullConfig
 	virtualServers = append(virtualServers, virtualServer1)
 
-	_, err := k.UpdateConfig("vm", virtualServers)
+	_, err := k.GenerateL4Config(virtualServers)
 	assert.Equal(t, err, nil)
 }

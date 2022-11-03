@@ -1,8 +1,9 @@
 package common
 
 import (
-	"k8s.io/apimachinery/pkg/types"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type NamespacedName struct {
@@ -10,11 +11,11 @@ type NamespacedName struct {
 	Name      string `json:"name"`
 }
 
-func (n NamespacedName) String() string {
+func (n NamespacedName) ToString() string {
 	return n.Namespace + `/` + n.Name
 }
 
-func (n NamespacedName) Into() types.NamespacedName {
+func (n NamespacedName) IntoTypes() types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: n.Namespace,
 		Name:      n.Name,

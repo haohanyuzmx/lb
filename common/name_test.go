@@ -1,9 +1,10 @@
 package common
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 )
 
 func TestNamespacedName(t *testing.T) {
@@ -14,7 +15,7 @@ func TestNamespacedName(t *testing.T) {
 			Name:      "vm1",
 		}
 		n.FromTypes(tn)
-		assert.Equal(t, n.String(), tn.String())
+		assert.Equal(t, n.ToString(), tn.String())
 	}
 
 	{
@@ -26,7 +27,7 @@ func TestNamespacedName(t *testing.T) {
 			Namespace: "default",
 			Name:      "vm1",
 		}
-		assert.Equal(t, n.Into(), tn)
+		assert.Equal(t, n.IntoTypes(), tn)
 	}
 	{
 		tn := types.NamespacedName{
@@ -35,6 +36,6 @@ func TestNamespacedName(t *testing.T) {
 		}
 		n := NamespacedName{}
 		n.FromString(tn.String())
-		assert.Equal(t, tn.String(), n.String())
+		assert.Equal(t, tn.String(), n.ToString())
 	}
 }
