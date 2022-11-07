@@ -7,8 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"my.domain/lb/agent"
 	v1 "my.domain/lb/api/v1"
-	"my.domain/lb/controller"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -56,11 +56,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.ControllerReconciler{
+	if err = (&agent.AgentReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Update")
+		setupLog.Error(err, "unable to create agent", "agent", "Update")
 		os.Exit(1)
 	}
 	//if err = (&v1.).SetupWebhookWithManager(mgr); err != nil {
