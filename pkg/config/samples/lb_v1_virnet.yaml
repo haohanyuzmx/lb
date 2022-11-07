@@ -17,3 +17,23 @@ spec:
       namespace: default
       name: nic2
   vip_pool: 0.0.0.0/0
+---
+apiVersion: lb.my.domain/v1
+kind: VirNet
+metadata:
+  labels:
+    app.kubernetes.io/name: virnet
+    app.kubernetes.io/instance: virnet-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+  name: vn2
+spec:
+  nic_s:
+    -
+      namespace: default
+      name: nic3
+    -
+      namespace: default
+      name: nic4
+  vip_pool: 0.0.0.0/0

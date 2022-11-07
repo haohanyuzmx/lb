@@ -4,18 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"math"
 	lbv1 "my.domain/lb/api/v1"
 	"my.domain/lb/common"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type ControllerReconciler struct {
@@ -32,11 +28,18 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 	if vs.DeletionTimestamp != nil {
-
+		return ctrl.Result{}, r.deleteVS(ctx, vs) //delete出错可以重试
 	}
 
-	//check(vs)
-	if vs.Status.VIP != "" && vs.Status.Backup.ToString() != `/` && vs.Status.Master.ToString() != `/` {
+	if vs.Status.NowVirNet != vs.Spec.VirtualNetwork { //更改了vip所在虚拟机网络
+		//wait.Until()
+
+		if err = r.deleteVS(ctx, vs); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	if vs.Status.Backup.String() != `/` && vs.Status.Master.String() != `/` { //master和backup分配成功
 		return ctrl.Result{}, nil
 	}
 
@@ -47,25 +50,26 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualServer) error {
+func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualServer) error { //幂等
 	var err error
 	vsindex := vs.Namespace + `/` + vs.Name
-	if vs.Status.NowVirNet.ToString() != `/` {
+	if vs.Status.NowVirNet.String() != `/` {
 		vip := vs.Status.VIP
 		vn := &lbv1.VirNet{}
-		if err = r.Get(ctx, vs.Status.NowVirNet.IntoTypes(), vn); err != nil {
+		if err = r.Get(ctx, vs.Status.NowVirNet.Into(), vn); err != nil {
 			return err
 		}
 		vn.Free(vip)
+		r.Status().Update(ctx, vn)
 	}
-	if vs.Status.Master.ToString() != `/` {
+	if vs.Status.Master.String() != `/` {
 		master := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Master.IntoTypes(), master); err != nil {
+		if err = r.Get(ctx, vs.Status.Master.Into(), master); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range master.Status.MasterLBs {
-			if namespacedName.ToString() == vsindex {
+		for i, namespacedName := range master.Spec.Master {
+			if namespacedName.String() == vsindex {
 				index = i
 				break
 			}
@@ -73,17 +77,18 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm master wrong, should have vs")
 		} else {
-			master.Status.MasterLBs = append(master.Status.MasterLBs[:index], master.Status.MasterLBs[index+1:]...)
+			master.Spec.Master = append(master.Spec.Master[:index], master.Spec.Master[index+1:]...)
 		}
+		r.Update(ctx, master)
 	}
-	if vs.Status.Backup.ToString() != `/` {
+	if vs.Status.Backup.String() != `/` {
 		backup := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Backup.IntoTypes(), backup); err != nil {
+		if err = r.Get(ctx, vs.Status.Backup.Into(), backup); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range backup.Status.MasterLBs {
-			if namespacedName.ToString() == vsindex {
+		for i, namespacedName := range backup.Spec.Backup {
+			if namespacedName.String() == vsindex {
 				index = i
 				break
 			}
@@ -91,13 +96,16 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm backup wrong, should have vs")
 		} else {
-			backup.Status.MasterLBs = append(backup.Status.MasterLBs[:index], backup.Status.MasterLBs[index+1:]...)
+			backup.Spec.Backup = append(backup.Spec.Backup[:index], backup.Spec.Backup[index+1:]...)
 		}
+		r.Update(ctx, backup)
 	}
+	vs.Status = lbv1.VirtualServerStatus{}
 	return nil
 }
 
-func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer) error { //todo:事务
+func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer) error { //
+	//todo:事务
 	//onFail:= func() {  todo:失败后的恢复函数
 	//
 	//}
@@ -105,7 +113,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 	net := vs.Spec.VirtualNetwork
 	vn := &lbv1.VirNet{}
 
-	if err = r.Get(ctx, net.IntoTypes(), vn); err != nil {
+	if err = r.Get(ctx, net.Into(), vn); err != nil {
 		return err
 	}
 	vip := vn.Alloc()
@@ -113,12 +121,18 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 		return errors.New("not enough vip")
 	}
 	if err = r.Status().Update(ctx, vn); err != nil {
+		//todo:后续失败需要考虑free vip
 		return err
 	}
+	defer func() {
+		if err != nil {
+
+		}
+	}()
 
 	//stop:=make(chan struct{})
 	//wait.Until(func() {
-	//	if err := r.Get(ctx, util.ToString2NamespacedName(net), vn);err != nil {
+	//	if err := r.Get(ctx, util.String2NamespacedName(net), vn);err != nil {
 	//		return
 	//	}
 	//	if err:=r.Status().Update(ctx, vn);err!=nil{
@@ -129,6 +143,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 
 	vs.Status.VIP = vip
 	vs.Status.NowVirNet = vs.Spec.VirtualNetwork
+	//todo:考虑两段性更新(先更新vip，vn;然后更新master，backup)
 
 	masters, backups, err := r.getvm(vn)
 	if err != nil {
@@ -181,36 +196,17 @@ func (r *ControllerReconciler) getvm(net *lbv1.VirNet) (types.NamespacedName, ty
 	backupnic := nics.Items[index].Spec.Master
 	nic := &lbv1.NIC{}
 	var backup common.NamespacedName
-	if err := r.Get(context.Background(), backupnic.IntoTypes(), nic); err != nil {
+	if err := r.Get(context.Background(), backupnic.Into(), nic); err != nil {
 		fmt.Println(err)
 	} else {
 		backup = nic.Spec.VM
 	}
 
-	return master.IntoTypes(), backup.IntoTypes(), nil
+	return master.Into(), backup.Into(), nil
 }
 
 func (r *ControllerReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if mgr == nil {
-		return fmt.Errorf("can't setup with nil manager")
-	}
-
-	c, err := controller.New("ctr-controller", mgr, controller.Options{
-		Reconciler: r,
-	})
-	if err != nil {
-		return err
-	}
-
-	//if err = c.Watch(&source.Kind{Type: &lbv1.VirNet{}}, &handler.Funcs{}); err != nil {
-	//	return err
-	//}
-	//if err = c.Watch(&source.Kind{Type: &lbv1.NIC{}}, &handler.Funcs{}); err != nil {
-	//	return err
-	//}
-	if err = c.Watch(&source.Kind{Type: &lbv1.VirtualServer{}}, &handler.EnqueueRequestForObject{}); err != nil {
-		return err
-	}
-
-	return nil
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&lbv1.VirtualServer{}).
+		Complete(r)
 }
