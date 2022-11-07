@@ -98,7 +98,7 @@ func (l *LBService) CreateInstances(virtualServers []*common.VirtualServer) ([]s
 		for _, vs := range l4VirtualServers {
 			newL4VirtualServers = append(l.currentL4VirtualServers, vs)
 		}
-		newL4VirtualServerIds := util.MergeArrays(l.currentL4VirtualServerIds, l4VirtualServerIds)
+		newL4VirtualServerIds := append(l.currentL4VirtualServerIds, l4VirtualServerIds...)
 		_, err := l.keepalived.Update(newL4VirtualServers)
 		if err != nil {
 			fmt.Printf("failed to create L4 LB %s, error: %s", newL4VirtualServerIds, err.Error())
@@ -107,7 +107,7 @@ func (l *LBService) CreateInstances(virtualServers []*common.VirtualServer) ([]s
 		l.currentL4VirtualServerIds = newL4VirtualServerIds
 		l.currentL4VirtualServers = newL4VirtualServers
 	}
-	newCreatedVSIds := util.MergeArrays(l4VirtualServerIds, l7VirtualServerIds)
+	newCreatedVSIds := append(l4VirtualServerIds, l7VirtualServerIds...)
 
 	return newCreatedVSIds, nil
 }

@@ -11,7 +11,7 @@ type NamespacedName struct {
 	Name      string `json:"name"`
 }
 
-func (n NamespacedName) ToString() string {
+func (n NamespacedName) IntoString() string {
 	return n.Namespace + `/` + n.Name
 }
 

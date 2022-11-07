@@ -18,7 +18,9 @@ package controller_test
 
 import (
 	"context"
-	"my.domain/lb/controller"
+	lbv1 "my.domain/lb/pkg/apis/v1"
+	"my.domain/lb/pkg/controller"
+
 	"os"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,7 +30,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	lbv1 "my.domain/lb/api/v1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -53,15 +55,15 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	//Expect(os.Setenv("KUBEBUILDER_ASSETS",
-	//	"/Users/zhengmingxin/Library/Application Support/io.kubebuilder.envtest/k8s/1.25.0-darwin-arm64")).
-	//	To(Succeed())
+	Expect(os.Setenv("KUBEBUILDER_ASSETS",
+		"/Users/zhengmingxin/Library/Application Support/io.kubebuilder.envtest/k8s/1.25.0-darwin-arm64")).
+		To(Succeed())
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "deploy", "crds")},
 		ErrorIfCRDPathMissing: true,
 	}
 

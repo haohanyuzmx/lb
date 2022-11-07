@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "my.domain/lb/api/v1"
-	"my.domain/lb/common"
+	v1 "my.domain/lb/pkg/apis/v1"
+	"my.domain/lb/pkg/common"
 	"time"
 )
 
@@ -69,21 +69,21 @@ var _ = Describe("new virtualServer", func() {
 
 		Eventually(func() bool {
 			myvs := v1.VirtualServer{}
-			k8sClient.Get(ctx, getNamespaceName(vs.ObjectMeta).Into(), &myvs)
-			if myvs.Status.NowVirNet.String() == "/" {
+			k8sClient.Get(ctx, getNamespaceName(vs.ObjectMeta).IntoTypes(), &myvs)
+			if myvs.Status.NowVirNet.IntoString() == "/" {
 				return false
 			}
 
 			master := v1.VM{}
-			k8sClient.Get(ctx, myvs.Status.Master.Into(), &master)
-			if master.Spec.Master[0] != getNamespaceName(vs.ObjectMeta) {
+			k8sClient.Get(ctx, myvs.Status.Master.IntoTypes(), &master)
+			if master.Status.MasterLBs[0] != getNamespaceName(vs.ObjectMeta) {
 				fmt.Println("wrong!!!!")
 				return false
 			}
 
 			backup := v1.VM{}
-			k8sClient.Get(ctx, myvs.Status.Backup.Into(), &backup)
-			if backup.Spec.Backup[0] != getNamespaceName(vs.ObjectMeta) {
+			k8sClient.Get(ctx, myvs.Status.Backup.IntoTypes(), &backup)
+			if backup.Status.BackupLBs[0] != getNamespaceName(vs.ObjectMeta) {
 				fmt.Println("wrong!!!!")
 				return false
 			}

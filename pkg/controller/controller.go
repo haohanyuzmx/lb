@@ -7,8 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"math"
-	lbv1 "my.domain/lb/api/v1"
-	"my.domain/lb/common"
+	lbv1 "my.domain/lb/pkg/apis/v1"
+	"my.domain/lb/pkg/common"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -39,7 +40,7 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	if vs.Status.Backup.String() != `/` && vs.Status.Master.String() != `/` { //master和backup分配成功
+	if vs.Status.Backup.IntoString() != `/` && vs.Status.Master.IntoString() != `/` { //master和backup分配成功
 		return ctrl.Result{}, nil
 	}
 
@@ -53,23 +54,23 @@ func (r *ControllerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualServer) error { //幂等
 	var err error
 	vsindex := vs.Namespace + `/` + vs.Name
-	if vs.Status.NowVirNet.String() != `/` {
+	if vs.Status.NowVirNet.IntoString() != `/` {
 		vip := vs.Status.VIP
 		vn := &lbv1.VirNet{}
-		if err = r.Get(ctx, vs.Status.NowVirNet.Into(), vn); err != nil {
+		if err = r.Get(ctx, vs.Status.NowVirNet.IntoTypes(), vn); err != nil {
 			return err
 		}
 		vn.Free(vip)
 		r.Status().Update(ctx, vn)
 	}
-	if vs.Status.Master.String() != `/` {
+	if vs.Status.Master.IntoString() != `/` {
 		master := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Master.Into(), master); err != nil {
+		if err = r.Get(ctx, vs.Status.Master.IntoTypes(), master); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range master.Spec.Master {
-			if namespacedName.String() == vsindex {
+		for i, namespacedName := range master.Status.MasterLBs {
+			if namespacedName.IntoString() == vsindex {
 				index = i
 				break
 			}
@@ -77,18 +78,18 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm master wrong, should have vs")
 		} else {
-			master.Spec.Master = append(master.Spec.Master[:index], master.Spec.Master[index+1:]...)
+			master.Status.MasterLBs = append(master.Status.MasterLBs[:index], master.Status.MasterLBs[index+1:]...)
 		}
-		r.Update(ctx, master)
+		r.Status().Update(ctx, master)
 	}
-	if vs.Status.Backup.String() != `/` {
+	if vs.Status.Backup.IntoString() != `/` {
 		backup := &lbv1.VM{}
-		if err = r.Get(ctx, vs.Status.Backup.Into(), backup); err != nil {
+		if err = r.Get(ctx, vs.Status.Backup.IntoTypes(), backup); err != nil {
 			return err
 		}
 		index := -1
-		for i, namespacedName := range backup.Spec.Backup {
-			if namespacedName.String() == vsindex {
+		for i, namespacedName := range backup.Status.BackupLBs {
+			if namespacedName.IntoString() == vsindex {
 				index = i
 				break
 			}
@@ -96,9 +97,9 @@ func (r *ControllerReconciler) deleteVS(ctx context.Context, vs *lbv1.VirtualSer
 		if index == -1 {
 			fmt.Println("vm backup wrong, should have vs")
 		} else {
-			backup.Spec.Backup = append(backup.Spec.Backup[:index], backup.Spec.Backup[index+1:]...)
+			backup.Status.BackupLBs = append(backup.Status.BackupLBs[:index], backup.Status.BackupLBs[index+1:]...)
 		}
-		r.Update(ctx, backup)
+		r.Status().Update(ctx, backup)
 	}
 	vs.Status = lbv1.VirtualServerStatus{}
 	return nil
@@ -113,7 +114,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 	net := vs.Spec.VirtualNetwork
 	vn := &lbv1.VirNet{}
 
-	if err = r.Get(ctx, net.Into(), vn); err != nil {
+	if err = r.Get(ctx, net.IntoTypes(), vn); err != nil {
 		return err
 	}
 	vip := vn.Alloc()
@@ -156,7 +157,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 	}
 
 	master.AddMaster(types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name})
-	if err = r.Update(ctx, master); err != nil {
+	if err = r.Status().Update(ctx, master); err != nil {
 		//master没成功更新不用考虑backup更新
 		return err
 	}
@@ -167,7 +168,7 @@ func (r *ControllerReconciler) addVS(ctx context.Context, vs *lbv1.VirtualServer
 			return err
 		}
 		backup.AddBackup(types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name})
-		if err = r.Update(ctx, backup); err != nil {
+		if err = r.Status().Update(ctx, backup); err != nil {
 			return err
 		}
 		vs.Status.Backup.FromTypes(backups)
@@ -196,13 +197,13 @@ func (r *ControllerReconciler) getvm(net *lbv1.VirNet) (types.NamespacedName, ty
 	backupnic := nics.Items[index].Spec.Master
 	nic := &lbv1.NIC{}
 	var backup common.NamespacedName
-	if err := r.Get(context.Background(), backupnic.Into(), nic); err != nil {
+	if err := r.Get(context.Background(), backupnic.IntoTypes(), nic); err != nil {
 		fmt.Println(err)
 	} else {
 		backup = nic.Spec.VM
 	}
 
-	return master.Into(), backup.Into(), nil
+	return master.IntoTypes(), backup.IntoTypes(), nil
 }
 
 func (r *ControllerReconciler) SetupWithManager(mgr ctrl.Manager) error {
