@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"my.domain/lb/pkg/agent/common"
-	"my.domain/lb/pkg/agent/constants"
 	"my.domain/lb/pkg/agent/layer4"
 	"my.domain/lb/pkg/util"
 )
@@ -16,6 +15,14 @@ type LBService struct {
 	currentL7VirtualServers   []*common.VirtualServer
 
 	keepalived *layer4.Keepalived
+}
+
+func NewLBService() *LBService {
+	lBService := new(LBService)
+	ka := layer4.NewKeepalived()
+	lBService.keepalived = ka
+
+	return lBService
 }
 
 func (l *LBService) isExisted(vsIndex string) bool {
@@ -44,7 +51,7 @@ func classifyVirtualServer(virtualServers []*common.VirtualServer) ([]*common.Vi
 	var l7VirtualServers []*common.VirtualServer
 
 	for _, virtualServer := range virtualServers {
-		if virtualServer.Protocol == constants.LbTypeL4 {
+		if common.IsL4LB(virtualServer.Protocol) {
 			l4VirtualServerIds = append(l4VirtualServerIds, virtualServer.Index)
 			l4VirtualServers = append(l4VirtualServers, virtualServer)
 		}

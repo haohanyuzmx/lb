@@ -6,16 +6,11 @@ const (
 )
 
 const (
-	LbL4TemplatePath    = "/root/lb/agent/template/keepalived.tmpl"
-	LbL4ConfigFilePath  = "/root/lb/agent/configs/L4/keepalived.conf"
+	LbL4TemplatePath    = "/root/lb/pkg/agent/template/keepalived.tmpl"
+	LbL4ConfigFilePath  = "/root/lb/pkg/agent/configs/L4/keepalived.conf"
 	KeepalivedStartCmd  = "systemctl start keepalived"
 	KeepalivedStopCmd   = "systemctl stop keepalived"
 	KeepalivedReloadCmd = "systemctl reload keepalived"
-)
-
-const (
-	LbTypeL4 = "L4"
-	LbTypeL7 = "L7"
 )
 
 type RoleType string

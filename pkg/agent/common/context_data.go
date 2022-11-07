@@ -95,3 +95,11 @@ func TransferVSFromCrd(namespaceName string, role string, src lbv1.VirtualServer
 		ServerPools: serverPools,
 	}
 }
+
+func IsL4LB(protocol string) bool {
+	return protocol == "TCP" || protocol == "UDP"
+}
+
+func IsL7LB(protocol string) bool {
+	return protocol == "HTTP" || protocol == "HTTPS"
+}
