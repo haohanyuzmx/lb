@@ -14,17 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package controller_test
 
 import (
+	"context"
+	lbv1 "my.domain/lb/pkg/apis/v1"
+	"my.domain/lb/pkg/controller"
+
+	"os"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	lbv1 "my.domain/lb/api/v1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -37,6 +43,10 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var (
+	stop   context.Context
+	cancel context.CancelFunc
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -45,11 +55,15 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	Expect(os.Setenv("KUBEBUILDER_ASSETS",
+		"/Users/zhengmingxin/Library/Application Support/io.kubebuilder.envtest/k8s/1.25.0-darwin-arm64")).
+		To(Succeed())
+
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "deploy", "crds")},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -68,10 +82,29 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+		// disable metrics serving
+		MetricsBindAddress: "0",
+	})
+
+	err = (&controller.ControllerReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
+	}).SetupWithManager(k8sManager)
+	Expect(err).NotTo(HaveOccurred())
+
+	stop, cancel = context.WithCancel(context.Background())
+	go func() {
+		err = k8sManager.Start(stop)
+		Expect(err).ToNot(HaveOccurred())
+	}()
 })
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	cancel()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+	Expect(os.Unsetenv("KUBEBUILDER_ASSETS")).To(Succeed())
 })

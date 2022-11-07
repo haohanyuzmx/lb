@@ -56,8 +56,8 @@ func (a *AgentReconciler) getLbToUpdate(vm lbv1.VM) ([]*agentcommon.VirtualServe
 
 	var existedVirtualServerIds []string
 	for _, vsNamespacedName := range vm.Status.MasterLBs {
-		if a.LbService.isExisted(vsNamespacedName.ToString()) {
-			existedVirtualServerIds = append(existedVirtualServerIds, vsNamespacedName.ToString())
+		if a.LbService.isExisted(vsNamespacedName.IntoString()) {
+			existedVirtualServerIds = append(existedVirtualServerIds, vsNamespacedName.IntoString())
 			continue
 		}
 		vs := a.getVirtualServer(vsNamespacedName.IntoTypes(), constants.Master.String())
@@ -68,8 +68,8 @@ func (a *AgentReconciler) getLbToUpdate(vm lbv1.VM) ([]*agentcommon.VirtualServe
 	}
 
 	for _, vsNamespacedName := range vm.Status.BackupLBs {
-		if a.LbService.isExisted(vsNamespacedName.ToString()) {
-			existedVirtualServerIds = append(existedVirtualServerIds, vsNamespacedName.ToString())
+		if a.LbService.isExisted(vsNamespacedName.IntoString()) {
+			existedVirtualServerIds = append(existedVirtualServerIds, vsNamespacedName.IntoString())
 			continue
 		}
 		vs := a.getVirtualServer(vsNamespacedName.IntoTypes(), constants.Backup.String())

@@ -10,13 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func MergeArrays(left []string, right []string) []string {
-	for _, item := range right {
-		left = append(left, item)
-	}
-	return left
-}
-
 func Contains(target string, array []string) bool {
 	sort.Strings(array)
 	index := sort.SearchStrings(array, target)

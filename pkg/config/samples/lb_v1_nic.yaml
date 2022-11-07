@@ -35,3 +35,41 @@ spec:
   master:
     namespace: default
     name: nic1
+---
+apiVersion: lb.my.domain/v1
+kind: NIC
+metadata:
+  labels:
+    app.kubernetes.io/name: nic
+    app.kubernetes.io/instance: nic-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+    net: vn2
+  name: nic3
+spec:
+  vm:
+    namespace: default
+    name: vm1
+  master:
+    namespace: default
+    name: nic4
+---
+apiVersion: lb.my.domain/v1
+kind: NIC
+metadata:
+  labels:
+    app.kubernetes.io/name: nic
+    app.kubernetes.io/instance: nic-sample
+    app.kubernetes.io/part-of: lb
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: lb
+    net: vn2
+  name: nic4
+spec:
+  vm:
+    namespace: default
+    name: vm2
+  master:
+    namespace: default
+    name: nic3

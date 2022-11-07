@@ -7,19 +7,21 @@ import (
 )
 
 type VMSpec struct {
-	Memery   string                  `json:"memery"`
-	CPU      string                  `json:"cpu"`
-	MgtIP    string                  `json:"managment_ip"`
+	// +optional
+	Memery string `json:"memery"`
+	// +optional
+	CPU string `json:"cpu"`
+	// +optional
+	MgtIP string `json:"managment_ip"`
+	// +optional
 	Hostname string                  `json:"hostname"`
 	NICs     []common.NamespacedName `json:"nic_s"`
 }
 
 type VMStatus struct {
-	HealthCheck int64 `json:"health_check"`
-	// +optional
-	MasterLBs []common.NamespacedName `json:"master_lb"`
-	// +optional
-	BackupLBs []common.NamespacedName `json:"backup_lb"`
+	HealthCheck int64                   `json:"health_check"`
+	MasterLBs   []common.NamespacedName `json:"master_lb"`
+	BackupLBs   []common.NamespacedName `json:"backup_lb"`
 }
 
 // +kubebuilder:object:root=true

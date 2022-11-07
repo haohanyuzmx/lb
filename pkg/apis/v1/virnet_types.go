@@ -3,6 +3,8 @@ package v1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"my.domain/lb/pkg/common"
+
+	"net"
 )
 
 type VirNetSpec struct {
@@ -37,8 +39,16 @@ func (vn *VirNet) Alloc() string {
 	return vip
 }
 
-func (vn *VirNet) Free(vip string) { // todo:校验
+func (vn *VirNet) Free(vip string) {
+	if !vn.Contains(vip) { // vip泄漏
+		return
+	}
 	vn.Status.UnuseVIPPool = append(vn.Status.UnuseVIPPool, vip)
+}
+
+func (vn *VirNet) Contains(vip string) bool {
+	_, vipNet, _ := net.ParseCIDR(vn.Spec.VIPPool)
+	return vipNet.Contains(net.ParseIP(vip))
 }
 
 func (vn *VirNet) init() {

@@ -15,7 +15,7 @@ func TestNamespacedName(t *testing.T) {
 			Name:      "vm1",
 		}
 		n.FromTypes(tn)
-		assert.Equal(t, n.ToString(), tn.String())
+		assert.Equal(t, n.IntoString(), tn.String())
 	}
 
 	{
@@ -36,6 +36,6 @@ func TestNamespacedName(t *testing.T) {
 		}
 		n := NamespacedName{}
 		n.FromString(tn.String())
-		assert.Equal(t, tn.String(), n.ToString())
+		assert.Equal(t, tn.String(), n.IntoString())
 	}
 }

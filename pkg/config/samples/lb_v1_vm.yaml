@@ -12,6 +12,8 @@ spec:
   nic_s:
     - namespace: default
       name: nic1
+    - namespace: default
+      name: nic3
 ---
 apiVersion: lb.my.domain/v1
 kind: VM
@@ -27,3 +29,5 @@ spec:
   nic_s:
     - namespace: default
       name: nic2
+    - namespace: default
+      name: nic4
