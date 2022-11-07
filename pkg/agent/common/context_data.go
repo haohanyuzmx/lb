@@ -1,7 +1,7 @@
 package common
 
 import (
-	lbv1 "my.domain/lb/api/v1"
+	lbv1 "my.domain/lb/pkg/apis/v1"
 )
 
 // the full config from crd and runtime data for one virtual server

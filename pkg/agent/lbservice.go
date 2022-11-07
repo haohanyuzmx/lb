@@ -3,10 +3,10 @@ package agent
 import (
 	"fmt"
 
-	"my.domain/lb/agent/common"
-	"my.domain/lb/agent/constants"
-	"my.domain/lb/agent/layer4"
-	"my.domain/lb/util"
+	"my.domain/lb/pkg/agent/common"
+	"my.domain/lb/pkg/agent/constants"
+	"my.domain/lb/pkg/agent/layer4"
+	"my.domain/lb/pkg/util"
 )
 
 type LBService struct {

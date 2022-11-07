@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"my.domain/lb/agent/common"
-	"my.domain/lb/agent/template"
-	"my.domain/lb/util"
-
-	"my.domain/lb/agent/constants"
+	"my.domain/lb/pkg/agent/common"
+	"my.domain/lb/pkg/agent/constants"
+	"my.domain/lb/pkg/agent/template"
+	"my.domain/lb/pkg/util"
 )
 
 type Keepalived struct {

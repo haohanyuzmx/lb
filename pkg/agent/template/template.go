@@ -7,7 +7,7 @@ import (
 	"os"
 	text_template "text/template"
 
-	"my.domain/lb/agent/common"
+	"my.domain/lb/pkg/agent/common"
 )
 
 type Template struct {
