@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"my.domain/lb/agent/common"
+	"my.domain/lb/pkg/agent/common"
 )
 
 var (

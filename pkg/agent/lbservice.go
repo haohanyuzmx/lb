@@ -9,6 +9,7 @@ import (
 )
 
 type LBService struct {
+	mock                      bool
 	currentL4VirtualServerIds []string
 	currentL7VirtualServerIds []string
 	currentL4VirtualServers   []*common.VirtualServer
@@ -17,9 +18,9 @@ type LBService struct {
 	keepalived *layer4.Keepalived
 }
 
-func NewLBService() *LBService {
+func NewLBService(mock bool) *LBService {
 	lBService := new(LBService)
-	ka := layer4.NewKeepalived()
+	ka := layer4.NewKeepalived(mock)
 	lBService.keepalived = ka
 
 	return lBService
@@ -98,14 +99,19 @@ func (l *LBService) DeleteInstances(virtualServerIds []string) error {
 }
 
 func (l *LBService) CreateInstances(virtualServers []*common.VirtualServer) ([]string, error) {
-	l4VirtualServers, _, l4VirtualServerIds, l7VirtualServerIds := classifyVirtualServer(virtualServers)
+	l4VirtualServers, _, l4VirtualServerIds, _ := classifyVirtualServer(virtualServers)
 
+	var newL4VirtualServerIds []string
+	var newL7VirtualServerIds []string
 	if len(l4VirtualServerIds) != 0 {
 		var newL4VirtualServers []*common.VirtualServer
 		for _, vs := range l4VirtualServers {
+			if util.Contains(vs.Index, l.currentL4VirtualServerIds) {
+				continue
+			}
 			newL4VirtualServers = append(l.currentL4VirtualServers, vs)
+			newL4VirtualServerIds = append(l.currentL4VirtualServerIds, vs.Index)
 		}
-		newL4VirtualServerIds := util.MergeArrays(l.currentL4VirtualServerIds, l4VirtualServerIds)
 		_, err := l.keepalived.Update(newL4VirtualServers)
 		if err != nil {
 			fmt.Printf("failed to create L4 LB %s, error: %s", newL4VirtualServerIds, err.Error())
@@ -114,7 +120,7 @@ func (l *LBService) CreateInstances(virtualServers []*common.VirtualServer) ([]s
 		l.currentL4VirtualServerIds = newL4VirtualServerIds
 		l.currentL4VirtualServers = newL4VirtualServers
 	}
-	newCreatedVSIds := util.MergeArrays(l4VirtualServerIds, l7VirtualServerIds)
+	newCreatedVSIds := util.MergeArrays(newL4VirtualServerIds, newL7VirtualServerIds)
 
 	return newCreatedVSIds, nil
 }

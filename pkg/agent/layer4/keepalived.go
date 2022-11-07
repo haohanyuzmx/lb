@@ -11,6 +11,7 @@ import (
 )
 
 type Keepalived struct {
+	mock   bool
 	config *common.L4LbConfig
 }
 
@@ -22,8 +23,9 @@ var (
 	keepalvedTmpl = template.NewL4Template(constants.LbL4TemplatePath)
 )
 
-func NewKeepalived() *Keepalived {
+func NewKeepalived(mock bool) *Keepalived {
 	k := new(Keepalived)
+	k.mock = mock
 	k.config = new(common.L4LbConfig)
 	return k
 }
@@ -71,7 +73,9 @@ func (k *Keepalived) Create(virtualServers []*common.VirtualServer) (bool, error
 	if err != nil {
 		return false, fmt.Errorf("Failed to generate keepalived config, for vm %s", hostname)
 	}
-
+	if k.mock == true {
+		return true, nil
+	}
 	err = util.ExecuteCommand(constants.KeepalivedStartCmd, "")
 	if err != nil {
 		return false, fmt.Errorf("Failed to start keepalived, for vm %s", hostname)
@@ -80,6 +84,9 @@ func (k *Keepalived) Create(virtualServers []*common.VirtualServer) (bool, error
 }
 
 func (k *Keepalived) Remove() (bool, error) {
+	if k.mock == true {
+		return true, nil
+	}
 
 	err := util.ExecuteCommand(constants.KeepalivedStopCmd, "")
 	if err != nil {
@@ -92,6 +99,9 @@ func (k *Keepalived) Update(virtualServers []*common.VirtualServer) (bool, error
 	_, err := k.GenerateL4Config(virtualServers)
 	if err != nil {
 		return false, fmt.Errorf("Failed to generate keepalived config, for vm %s", hostname)
+	}
+	if k.mock == true {
+		return true, nil
 	}
 	err = util.ExecuteCommand(constants.KeepalivedReloadCmd, "")
 	if err != nil {

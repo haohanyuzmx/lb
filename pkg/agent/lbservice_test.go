@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ var (
 		VIP:    []string{"2.2.2.2"},
 	}
 
-	basicL4FullConfig = &common.VirtualServer{
+	basicL4FullConfig = common.VirtualServer{
 		Index:       "1",
 		Enabled:     true,
 		Name:        "L4_test",
@@ -63,16 +64,26 @@ func TestCreateLbInstance(t *testing.T) {
 
 	var virtualServers []*common.VirtualServer
 	virtualServer1 := basicL4FullConfig
-	virtualServers = append(virtualServers, virtualServer1)
+	virtualServers = append(virtualServers, &virtualServer1)
 
-	service := NewLBService()
-	service.currentL4VirtualServerIds = append(service.currentL4VirtualServerIds, "2")
+	service := NewLBService(true)
+	_, err := service.CreateInstances(virtualServers)
+	fmt.Println(service.currentL4VirtualServerIds)
+	assert.Equal(t, err, nil)
+
 	currentL4Service := basicL4FullConfig
 	currentL4Service.Index = "2"
-	service.currentL4VirtualServers = append(service.currentL4VirtualServers, currentL4Service)
-	_, err := service.CreateInstances(virtualServers)
+	currentL4Service.VirtualAddr = "13.13.13.13"
+	virtualServers = append(virtualServers, &currentL4Service)
+	_, err = service.CreateInstances(virtualServers)
+	fmt.Println(service.currentL4VirtualServerIds)
 
 	assert.Equal(t, err, nil)
+
+	deleteVSIds := []string{"1"}
+	err = service.DeleteInstances(deleteVSIds)
+	assert.Equal(t, err, nil)
+
 }
 
 func TestUpdateLbInstance(t *testing.T) {
